@@ -4,11 +4,15 @@ import type { OtherString } from './types/common';
 
 dotenv.config();
 
-export const config = {
-    env: getConfig('ENV') as ('dev' | 'stage' | 'prod' | OtherString),
-};
+export function isDev() {
+    return getEnvVar('ENV') === 'dev';
+}
 
-export function getConfig(configName: string) {
+export function isProd() {
+    return getEnvVar('ENV') === 'prod';
+}
+
+export function getEnvVar(configName: string) {
     const config = process.env[configName];
 
     if (!config) {
@@ -18,4 +22,4 @@ export function getConfig(configName: string) {
     return config;
 }
 
-export type Config = typeof config;
+export type Env = 'dev' | 'prod' | OtherString;

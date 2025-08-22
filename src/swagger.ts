@@ -1,5 +1,5 @@
 import type { ExpressRoute } from './types/expressive';
-import type { AuthMethod, Param, RequestBody, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
+import type { AuthMethod, Param, Content, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
 
 
 export const globalSwaggerDoc: SwaggerConfig = {
@@ -19,7 +19,6 @@ export const swaggerBuilder = (info: SwaggerConfig['info']) => {
         withSecuritySchemes(schemes: Record<string, SecurityScheme>) {
             globalSwaggerDoc.components.securitySchemes = schemes;
             return this;
-
         },
         withSchemas(schemas: Record<string, Schema>) {
             globalSwaggerDoc.components.schemas = schemas;
@@ -35,7 +34,7 @@ export const swaggerBuilder = (info: SwaggerConfig['info']) => {
     };
 };
 
-export const securitySchemes = {
+const securitySchemes = {
     BasicAuth: (): SecurityScheme => ({
         type: 'http',
         scheme: 'basic',
@@ -65,13 +64,20 @@ export const securitySchemes = {
     }),
 } as const;
 
-export const security = {
-    NONE: [],
-    NAMED: (name: string): AuthMethod => ({ [name]: [] }),
+const securityRegistry: Record<string, AuthMethod> = {};
+
+const security = {
+    NONE: () => [],
+    NAMED: (name: string): AuthMethod => {
+        if (!securityRegistry[name]) {
+            securityRegistry[name] = { [name]: [] };
+        }
+        return securityRegistry[name];
+    },
 };
 
 // ----------------------------------------------- //
-function jsonSchema(schema: Schema): RequestBody {
+function jsonSchema(schema: Schema): Content {
     return {
         content: {
             'application/json': {
@@ -81,7 +87,7 @@ function jsonSchema(schema: Schema): RequestBody {
     };
 }
 
-function jsonSchemaRef(name: string): RequestBody {
+function jsonSchemaRef(name: string): Content {
     return jsonSchema({ $ref: `#/components/schemas/${name}` });
 }
 
@@ -126,10 +132,15 @@ export function tryParsePathParameters(path: string): Param[] {
     return matches.map(pp => pathParam(pp, { type: 'string' }));
 }
 
+// ----------------------------------------------- //
+
 export const SWG = {
     param,
     pathParam,
     queryParam,
     headerParam,
     jsonSchema,
+    jsonSchemaRef,
+    security,
+    securitySchemes,
 };

@@ -1,7 +1,7 @@
 import type { Logger } from 'winston';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import { config } from './config';
+import { isDev, isProd } from './env';
 
 
 // -------------------------------------------------------------------------- //
@@ -31,7 +31,7 @@ const createFileLogger = (filename: string) => {
                 zippedArchive: true,
                 auditFile: './logs/audit.json',
                 maxSize: '20m',
-                maxFiles: config.env === 'prod' ? '30d' : '1d',
+                maxFiles: isProd() ? '30d' : '1d',
                 // format: defaultFormat,
                 // the nested 'format' field causes issues with logging errors;
                 // use the 'format' field on logger, instead of transport;
@@ -39,7 +39,7 @@ const createFileLogger = (filename: string) => {
         ],
     });
 
-    if (config.env === 'dev') {
+    if (isDev()) {
         logger.add(consoleTransport);
     }
 

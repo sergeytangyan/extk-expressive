@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { config } from '../config';
 import { container } from '../container';
+import { isProd } from '../env';
 import { ApiError, BadRequestError, InternalError } from '../errors';
 import { ApiErrorResponse } from '../response/ApiErrorResponse';
 
@@ -40,7 +40,7 @@ export const getErrorHandlerMiddleware = (
             }
 
             finalError = new InternalError();
-            if (config.env !== 'prod') {
+            if (!isProd()) {
                 finalError.data = { name: err.name, message: err.message, stack: err.stack, cause: err.cause };
             }
         }

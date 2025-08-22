@@ -7,8 +7,9 @@ import type { ContentType, HttpMethod } from './common';
 
 
 export type Schema = Record<string, unknown> | { $ref: string }; // TODO
-export type RequestBody = {
-    content: Partial<Record<ContentType, {
+export type Content = {
+    description?: string,
+    content?: Partial<Record<ContentType, {
         schema: Schema
     }>>,
 };
@@ -27,10 +28,10 @@ export type Servers = {
 
 export type PathItem = {
     summary?: string,
-    requestBody?: RequestBody,
+    requestBody?: Content,
     parameters?: Param[],
     servers?: Servers
-    responses?: Record<string, Schema>, // TODO
+    responses?: Record<string, Content>,
     tags?: string[],
     operationId?: string,
     deprecated?: boolean,
@@ -40,8 +41,24 @@ export type PathItem = {
 export type AuthMethod = Record<string, string[]>;
 
 export type SecurityScheme = {
-    type: string,
-    [key: string]: any,
+    type: 'http',
+    scheme: 'basic' | 'bearer',
+} | {
+    type: 'apiKey',
+    in: 'header',
+    name: string,
+} | {
+    type: 'openIdConnect',
+    openIdConnectUrl: string,
+} | {
+    type: 'oauth2',
+    flows: {
+        authorizationCode: {
+            authorizationUrl: string,
+            tokenUrl: string,
+            scopes: Record<string, string>,
+        },
+    },
 };
 
 export type SwaggerConfig = {

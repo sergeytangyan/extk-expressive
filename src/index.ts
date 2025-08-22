@@ -1,5 +1,5 @@
 export * from './common';
-export * from './config';
+export * from './env';
 export * from './container';
 export * from './errors';
 export * from './expressive';
