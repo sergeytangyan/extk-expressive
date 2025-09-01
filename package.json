@@ -24,12 +24,14 @@
         "@types/node": "^20.9.3",
         "ts-node": "^10.9.2",
         "tsup": "^8.5.0",
-        "typescript": "^5.9.2"
+        "typescript": "^5.9.2",
+        "@types/swagger-ui-express": "^4.1.8"
     },
     "peerDependencies": {
         "express": "^5.1.0"
     },
     "dependencies": {
+        "swagger-ui-express": "^5.0.1",
         "dotenv": "^17.1.0",
         "helmet": "^8.0.0",
         "morgan": "^1.10.0",

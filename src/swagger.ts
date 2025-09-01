@@ -1,5 +1,5 @@
 import type { ExpressRoute } from './types/expressive';
-import type { AuthMethod, Param, Content, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
+import type { AuthMethod, Content, Param, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
 
 
 export const globalSwaggerDoc: SwaggerConfig = {
@@ -9,27 +9,31 @@ export const globalSwaggerDoc: SwaggerConfig = {
     components: {},
 };
 
-export const swaggerBuilder = (info: SwaggerConfig['info']) => {
-    globalSwaggerDoc.info = info;
+export const swaggerBuilder = (swaggerDoc?: SwaggerConfig) => {
+    swaggerDoc ??= globalSwaggerDoc;
     return {
+        withInfo(info: SwaggerConfig['info']) {
+            swaggerDoc.info = info;
+            return this;
+        },
         withServers(servers: Servers) {
-            globalSwaggerDoc.servers = servers;
+            swaggerDoc.servers = servers;
             return this;
         },
         withSecuritySchemes(schemes: Record<string, SecurityScheme>) {
-            globalSwaggerDoc.components.securitySchemes = schemes;
+            swaggerDoc.components.securitySchemes = schemes;
             return this;
         },
         withSchemas(schemas: Record<string, Schema>) {
-            globalSwaggerDoc.components.schemas = schemas;
+            swaggerDoc.components.schemas = schemas;
             return this;
         },
-        withGlobalSecurity(globalAuthMethods: AuthMethod[]) {
-            globalSwaggerDoc.security = globalAuthMethods;
+        withDefaultSecurity(globalAuthMethods: AuthMethod[]) {
+            swaggerDoc.security = globalAuthMethods;
             return this;
         },
         get() {
-            return globalSwaggerDoc;
+            return swaggerDoc;
         },
     };
 };
@@ -65,15 +69,11 @@ const securitySchemes = {
 } as const;
 
 const securityRegistry: Record<string, AuthMethod> = {};
-
-const security = {
-    NONE: () => [],
-    NAMED: (name: string): AuthMethod => {
+const security = (name: string): AuthMethod => {
         if (!securityRegistry[name]) {
             securityRegistry[name] = { [name]: [] };
         }
         return securityRegistry[name];
-    },
 };
 
 // ----------------------------------------------- //
