@@ -1,7 +1,7 @@
-import type { Logger } from 'winston';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { isDev, isProd } from './env';
+import type { Logger } from './types/common';
 
 
 // -------------------------------------------------------------------------- //
@@ -49,18 +49,17 @@ const createFileLogger = (filename: string) => {
 // -------------------------------------------------------------------------- //
 export const createLogger = winston.createLogger;
 
-export const getDefaultFileLogger = (name: string) => {
+export const getDefaultFileLogger = (name: string | symbol = Symbol('app')) => {
     if (!loggerRegistry[name]) {
-        loggerRegistry[name] = createFileLogger(name);
+        loggerRegistry[name] = createFileLogger(name.toString());
     }
 
     return loggerRegistry[name];
 };
 
-const defaultConsoleLoggerKey = Symbol('console');
-export const getDefaultConsoleLogger = () => {
-    if (!loggerRegistry[defaultConsoleLoggerKey]) {
-        loggerRegistry[defaultConsoleLoggerKey] = winston.createLogger({
+export const getDefaultConsoleLogger = (name: string | symbol = Symbol('console')) => {
+    if (!loggerRegistry[name]) {
+        loggerRegistry[name] = winston.createLogger({
             format: defaultFormat,
             transports: [
                 consoleTransport,
@@ -68,5 +67,5 @@ export const getDefaultConsoleLogger = () => {
         });
     }
 
-    return loggerRegistry[defaultConsoleLoggerKey]
+    return loggerRegistry[name];
 };

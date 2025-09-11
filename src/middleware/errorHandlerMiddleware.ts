@@ -1,16 +1,18 @@
 import type { NextFunction, Request, Response } from 'express';
-import { container } from '../container';
 import { isProd } from '../env';
 import { ApiError, BadRequestError, InternalError } from '../errors';
 import { ApiErrorResponse } from '../response/ApiErrorResponse';
+import type { Container } from '../types/common';
 
 
 export const getErrorHandlerMiddleware = (
+    container: Container,
     errorMapper?: (err: Error & Record<string, unknown>) => ApiError | null | undefined,
 ) => {
+    const { logger, alertHandler } = container;
+
     return async (err: Error & Record<string, any>, req: Request, res: Response, _next: NextFunction) => {
         let finalError: ApiError;
-        const { logger, alertHandler } = container;
 
         const customMappedError = errorMapper && errorMapper(err);
 

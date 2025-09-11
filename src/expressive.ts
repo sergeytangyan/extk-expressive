@@ -3,32 +3,27 @@ import helmet, { type HelmetOptions } from 'helmet';
 import morgan from 'morgan';
 import qs from 'qs';
 import swaggerUi from 'swagger-ui-express';
-import { container } from './container';
 import { convertExpressPath, globalSwaggerDoc, tryParsePathParameters } from './swagger';
-import type { HttpMethod } from './types/common';
+import type { Container, HttpMethod } from './types/common';
 import type { ExpressHandler, ExpressRoute } from './types/expressive';
 import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './types/swagger';
 
 
 // ----------------------------------------------- //
-export function expressiveRouter(
-    groupContext?: {
-        swaggerDoc?: SwaggerConfig,
-        oapi?: {
-            tags?: string[],
-            servers?: Servers,
-            security?: AuthMethod[]
-        },
+export function expressiveRouter(configs: {
+    swaggerDoc?: SwaggerConfig,
+    oapi?: {
+        tags?: string[],
+        servers?: Servers,
+        security?: AuthMethod[]
     },
     router?: express.Router,
-) {
-    router ??= express.Router();
-    const swaggerDoc = groupContext?.swaggerDoc ?? globalSwaggerDoc;
+}) {
+    const router = configs.router ?? express.Router();
+    const swaggerDoc = configs?.swaggerDoc ?? globalSwaggerDoc;
 
     return {
-        getRouter() {
-            return router;
-        },
+        router,
         addRoute(
             context: {
                 method: HttpMethod,
@@ -60,7 +55,7 @@ export function expressiveRouter(
                 // -- defaults --
                 responses: {}, // has to be defined or else responses are not documented... ¯\_(ツ)_/¯
                 // -- group defaults --
-                ...(groupContext?.oapi || {}),
+                ...(configs?.oapi || {}),
                 // -- overrides --
                 ...(pathItemConfig || {}),
                 parameters: [
@@ -85,25 +80,26 @@ export function expressiveRouter(
     };
 }
 
-export function expressiveServer(
-    configs?: {
+export function expressiveServer(configs: {
+    container: Container,
+    options?: {
         helmet?: Readonly<HelmetOptions>,
         morgan?: Readonly<{
             format: string, // TODO: FormatFn
             options?: Parameters<typeof morgan>[1],
         }>,
-        swagger?: {
-            swaggerDoc: SwaggerConfig,
-            path: ExpressRoute,
-        },
+    },
+    swagger?: {
+        swaggerDoc: SwaggerConfig,
+        path: ExpressRoute,
     },
     app?: express.Express,
-) {
-    app ??= express();
-    const { logger } = container;
+}) {
+    const { container, options, swagger } = configs;
+    const app = configs.app ?? express();
 
     // secure the app
-    app.use(helmet(configs?.helmet ?? {}));
+    app.use(helmet(options?.helmet ?? {}));
 
     // express removes '+' sign from query string by default.
     app.set('query parser', function(str: string) {
@@ -111,12 +107,12 @@ export function expressiveServer(
     });
 
     app.use(morgan(
-        configs?.morgan?.format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
-        configs?.morgan?.options ?? { stream: { write(message: string) { logger.info(message.trim()); } } },
+        options?.morgan?.format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
+        options?.morgan?.options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
     ));
 
-    if (configs?.swagger?.swaggerDoc) {
-        app.use(configs?.swagger.path, swaggerUi.serve, swaggerUi.setup(configs?.swagger?.swaggerDoc))
+    if (swagger?.swaggerDoc) {
+        app.use(swagger.path, swaggerUi.serve, swaggerUi.setup(swagger?.swaggerDoc))
     }
 
     return app;
