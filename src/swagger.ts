@@ -2,15 +2,14 @@ import type { ExpressRoute } from './types/expressive';
 import type { AuthMethod, Content, Param, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
 
 
-export const globalSwaggerDoc: SwaggerConfig = {
-    openapi: '3.1.0',
-    info: {},
-    paths: {},
-    components: {},
-};
+export const swaggerBuilder = () => {
+    const swaggerDoc: SwaggerConfig = {
+        openapi: '3.1.0',
+        info: {},
+        paths: {},
+        components: {},
+    };
 
-export const swaggerBuilder = (swaggerDoc?: SwaggerConfig) => {
-    swaggerDoc ??= globalSwaggerDoc;
     return {
         withInfo(info: SwaggerConfig['info']) {
             swaggerDoc.info = info;
@@ -70,10 +69,10 @@ const securitySchemes = {
 
 const securityRegistry: Record<string, AuthMethod> = {};
 const security = (name: string): AuthMethod => {
-        if (!securityRegistry[name]) {
-            securityRegistry[name] = { [name]: [] };
-        }
-        return securityRegistry[name];
+    if (!securityRegistry[name]) {
+        securityRegistry[name] = { [name]: [] };
+    }
+    return securityRegistry[name];
 };
 
 // ----------------------------------------------- //
