@@ -3,7 +3,7 @@ import helmet, { type HelmetOptions } from 'helmet';
 import morgan from 'morgan';
 import qs from 'qs';
 import swaggerUi from 'swagger-ui-express';
-import { convertExpressPath, swaggerBuilder, tryParsePathParameters } from './swagger';
+import { convertExpressPath, tryParsePathParameters } from './swagger';
 import type { Container, HttpMethod } from './types/common';
 import type { ExpressHandler, ExpressRoute } from './types/expressive';
 import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './types/swagger';
@@ -13,7 +13,10 @@ import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './type
 export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
     return {
         expressiveServer(configs: {
-            swaggerPath: ExpressRoute,
+            swagger: {
+                path: ExpressRoute,
+                doc: SwaggerConfig,
+            },
             options?: {
                 helmet?: Readonly<HelmetOptions>,
                 morgan?: Readonly<{
@@ -39,7 +42,7 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                 options?.morgan?.options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
             ));
 
-            app.use(configs.swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+            app.use(configs.swagger.path, swaggerUi.serve, swaggerUi.setup(configs.swagger.doc));
 
             return app;
         },
