@@ -16,25 +16,27 @@
     },
     "scripts": {
         "build": "tsup",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "node --import=tsx --test 'test/**/*.test.ts'"
     },
     "devDependencies": {
+        "@types/chance": "^1.1.7",
         "@types/express": "^5.0.1",
         "@types/morgan": "^1.9.9",
         "@types/node": "^20.9.3",
-        "ts-node": "^10.9.2",
+        "@types/swagger-ui-express": "^4.1.8",
+        "chance": "^1.1.13",
         "tsup": "^8.5.0",
         "typescript": "^5.9.2",
-        "@types/swagger-ui-express": "^4.1.8"
+        "tsx": "^4.20.3"
     },
     "peerDependencies": {
         "express": "^5.1.0"
     },
     "dependencies": {
-        "swagger-ui-express": "^5.0.1",
         "dotenv": "^17.1.0",
         "helmet": "^8.0.0",
         "morgan": "^1.10.0",
+        "swagger-ui-express": "^5.0.1",
         "winston": "^3.11.0",
         "winston-daily-rotate-file": "^5.0.0"
     },
