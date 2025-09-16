@@ -1,5 +1,6 @@
 import path from 'path';
-import type { Pagination, PaginationQuery } from './types/expressive';
+import type { Pagination, PaginationQuery, ReqSnapshot } from './types/expressive';
+import type { Request } from 'express';
 import { ApiError } from './errors';
 
 
@@ -45,12 +46,11 @@ export function parseDefaultPagination(query: PaginationQuery): Pagination {
     return { limit, offset };
 }
 
-// TODO
-// export function silently(fn: () => Promise<void>, reqSnapshot ?: Record<string, unknown>) {
-//     fn()
-//         .catch(e => this.mailerService.sendAlert(e, reqSnapshot))
-//         .catch(e => {
-//             this.logger.warn('Failed to send alert email');
-//             this.logger.error(e);
-//         });
-// }
+export function createReqSnapshot(req: Request & { user?: { id?: string | number } }): ReqSnapshot {
+    return {
+        query: req.query,
+        path: req.path,
+        method: req.method,
+        userId: req?.user?.id,
+    } as const;
+}

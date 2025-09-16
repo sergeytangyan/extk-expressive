@@ -3,6 +3,7 @@ import { isProd } from '../env';
 import { ApiError, BadRequestError, InternalError } from '../errors';
 import { ApiErrorResponse } from '../response/ApiErrorResponse';
 import type { Container } from '../types/common';
+import { createReqSnapshot } from '../common';
 
 
 export const buildErrorHandlerMiddleware = (container: Container) => {
@@ -37,7 +38,7 @@ export const buildErrorHandlerMiddleware = (container: Container) => {
                     }
 
                     if (alertHandler) {
-                        await alertHandler(err, req, res);
+                        alertHandler(err, createReqSnapshot(req));
                     }
 
                     finalError = new InternalError();

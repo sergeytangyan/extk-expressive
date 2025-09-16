@@ -16,3 +16,11 @@ export type Pagination = {
     limit: number,
     offset: number,
 };
+
+export type ReqSnapshot = {
+    readonly query: qs.ParsedQs;
+    readonly path: string;
+    readonly method: string;
+    readonly userId: string | number | undefined;
+};
+

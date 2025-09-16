@@ -1,12 +1,12 @@
-import type { Request, Response } from 'express';
-import { Logger as WinstonLogger } from 'winston';
+import type { Logger as WinstonLogger } from 'winston';
+import type { ReqSnapshot } from './expressive';
 
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options' | 'trace';
 export type OtherString = string & {};
 export type ContentType = 'application/json' | 'application/xml' | 'text/plain' | 'text/html' | OtherString;
 
-export type AlertHandler = (err: Error & Record<string, any>, req: Request, res: Response) => void | Promise<void>;
+export type AlertHandler = (err: Error & Record<string, any>, reqSnapshot?: ReqSnapshot) => void | Promise<void>;
 export type Logger = WinstonLogger;
 
 export type Container = {
