@@ -5,7 +5,7 @@ import type { Logger } from './types/common';
 
 
 // -------------------------------------------------------------------------- //
-const loggerRegistry: Record<string | symbol, Logger> = {};
+const loggerRegistry: Record<string, Logger> = {};
 
 const defaultFormat = winston.format.combine(
     winston.format.timestamp({ format: 'DD/MM/YYYY HH:mm:ss' }),
@@ -49,7 +49,7 @@ const createFileLogger = (filename: string) => {
 // -------------------------------------------------------------------------- //
 export const createLogger = winston.createLogger;
 
-export const getDefaultFileLogger = (name: string | symbol = Symbol('app')) => {
+export const getDefaultFileLogger = (name: string = 'app') => {
     if (!loggerRegistry[name]) {
         loggerRegistry[name] = createFileLogger(name.toString());
     }
@@ -57,7 +57,7 @@ export const getDefaultFileLogger = (name: string | symbol = Symbol('app')) => {
     return loggerRegistry[name];
 };
 
-export const getDefaultConsoleLogger = (name: string | symbol = Symbol('console')) => {
+export const getDefaultConsoleLogger = (name: string = 'console') => {
     if (!loggerRegistry[name]) {
         loggerRegistry[name] = winston.createLogger({
             format: defaultFormat,
