@@ -106,9 +106,10 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                         pathItem.parameters.push(...tryParsePathParameters(route));
                     }
 
-                    swaggerDoc.paths[route] = {
-                        [context.method]: pathItem,
-                    };
+                    if (!swaggerDoc.paths[route]) {
+                        swaggerDoc.paths[route] = {};
+                    }
+                    swaggerDoc.paths[route][context.method] = pathItem;
 
                     return router;
                 },

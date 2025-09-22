@@ -1,6 +1,6 @@
 {
     "name": "@extk/expressive",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "type": "commonjs",
     "publishConfig": {
         "access": "public"
@@ -20,11 +20,13 @@
     },
     "scripts": {
         "build": "tsup",
+        "prepublishOnly": "npm run build",
         "test": "node --import=tsx --test 'test/**/*.test.ts'",
         "lint": "eslint ./"
     },
     "devDependencies": {
         "@extk/eslint-config": "^0.2.0",
+        "@extk/tsconfig": "0.1.1",
         "@types/chance": "^1.1.7",
         "@types/express": "^5.0.1",
         "@types/morgan": "^1.9.9",
