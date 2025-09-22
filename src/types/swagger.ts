@@ -5,8 +5,64 @@ import type { ContentType, HttpMethod } from './common';
 // https://swagger.io/docs/specification/v3_0/basic-structure/ //
 // ------------------------------------------------------------//
 
+type NumericConfigs = {
+    minimum?: number,
+    maximum?: number,
+    exclusiveMinimum?: boolean,
+    exclusiveMaximum?: boolean,
+    multipleOf?: number,
+};
 
-export type Schema = Record<string, unknown> | { $ref: string }; // TODO
+type NumberType = { type: 'number', format?: 'float' | 'double' } & NumericConfigs;
+type IntegerType = { type: 'integer', format?: 'int32' | 'int64' } & NumericConfigs;
+type StringType = {
+    type: 'string',
+    minLength?: number,
+    maxLength?: number,
+    format?: 'date' | 'date-time' | 'password' | 'byte' | 'binary' | 'email' | 'uuid' | 'uri' | 'hostname' | 'ipv4' | 'ipv6';
+    pattern?: string,
+};
+type BooleanType = {
+    type: 'boolean',
+};
+
+type ArrayType = {
+    type: 'array',
+    items: Partial<Schema>, // circular
+    minItems?: number,
+    maxItems?: number,
+    uniqueItems?: boolean,
+};
+
+type ObjectType = {
+    type: 'object',
+    properties?: Record<string, Schema>, // circular
+    required?: string[],
+    additionalProperties?: boolean | Schema, // circular
+    minProperties?: number,
+    maxProperties?: number,
+};
+
+type BaseSchema = (
+    {
+        nullable?: boolean,
+        enum?: unknown[],
+        description?: string,
+        default?: unknown,
+    } & (
+        StringType |
+        NumberType |
+        IntegerType |
+        BooleanType |
+        ArrayType |
+        ObjectType
+    )
+) |
+{ $ref: string };
+
+export type Schema = BaseSchema | { allOf: BaseSchema[] } | { anyOf: BaseSchema[] } | { oneOf: BaseSchema[] };
+
+
 export type Content = {
     description?: string,
     content?: Partial<Record<ContentType, {
