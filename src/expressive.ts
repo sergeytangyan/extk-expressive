@@ -42,7 +42,9 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                 options?.morgan?.options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
             ));
 
-            app.use(configs.swagger.path, swaggerUi.serve, swaggerUi.setup(configs.swagger.doc));
+            app.use(configs.swagger.path, swaggerUi.serve, swaggerUi.setup(configs.swagger.doc, {
+                customSiteTitle: configs.swagger.doc.info?.title,
+            }));
 
             return app;
         },
