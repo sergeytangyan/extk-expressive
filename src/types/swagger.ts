@@ -16,7 +16,7 @@ export type Content = {
 export type Param = {
     in: 'path' | 'query' | 'headers', // TODO cookies
     name: string,
-    desciption: string,
+    description: string,
     required: boolean,
     schema: Schema,
 };

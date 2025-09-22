@@ -93,7 +93,7 @@ function param(inP: Param['in'], id: string, schema: Schema, required = true, de
     return {
         in: inP,
         name: name ?? id,
-        desciption: description,
+        description,
         required,
         schema,
     };
