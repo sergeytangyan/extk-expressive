@@ -1,6 +1,10 @@
 {
     "name": "@extk/expressive",
-    "version": "0.0.1",
+    "version": "0.1.0",
+    "type": "commonjs",
+    "publishConfig": {
+        "access": "public"
+    },
     "files": [
         "dist"
     ],
@@ -16,18 +20,21 @@
     },
     "scripts": {
         "build": "tsup",
-        "test": "node --import=tsx --test 'test/**/*.test.ts'"
+        "test": "node --import=tsx --test 'test/**/*.test.ts'",
+        "lint": "eslint ./"
     },
     "devDependencies": {
+        "@extk/eslint-config": "^0.2.0",
         "@types/chance": "^1.1.7",
         "@types/express": "^5.0.1",
         "@types/morgan": "^1.9.9",
         "@types/node": "^20.9.3",
         "@types/swagger-ui-express": "^4.1.8",
         "chance": "^1.1.13",
+        "eslint": "^9.36.0",
         "tsup": "^8.5.0",
-        "typescript": "^5.9.2",
-        "tsx": "^4.20.3"
+        "tsx": "^4.20.3",
+        "typescript": "^5.9.2"
     },
     "peerDependencies": {
         "express": "^5.1.0"

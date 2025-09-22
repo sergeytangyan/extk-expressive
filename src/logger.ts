@@ -49,7 +49,7 @@ const createFileLogger = (filename: string) => {
 // -------------------------------------------------------------------------- //
 export const createLogger = winston.createLogger;
 
-export const getDefaultFileLogger = (name: string = 'app') => {
+export const getDefaultFileLogger = (name = 'app') => {
     if (!loggerRegistry[name]) {
         loggerRegistry[name] = createFileLogger(name.toString());
     }
@@ -57,7 +57,7 @@ export const getDefaultFileLogger = (name: string = 'app') => {
     return loggerRegistry[name];
 };
 
-export const getDefaultConsoleLogger = (name: string = 'console') => {
+export const getDefaultConsoleLogger = (name = 'console') => {
     if (!loggerRegistry[name]) {
         loggerRegistry[name] = winston.createLogger({
             format: defaultFormat,

@@ -11,7 +11,7 @@ export const buildErrorHandlerMiddleware = (container: Container) => {
 
     return {
         getErrorHandlerMiddleware: (errorMapper?: (err: Error & Record<string, unknown>) => ApiError | null | undefined) => {
-            return async (err: Error & Record<string, any>, req: Request, res: Response, _next: NextFunction) => {
+            return async (err: Error & Record<string, unknown>, req: Request, res: Response, _next: NextFunction) => {
                 let finalError: ApiError;
 
                 const customMappedError = errorMapper && errorMapper(err);

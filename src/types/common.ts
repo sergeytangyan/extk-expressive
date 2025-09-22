@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Logger as WinstonLogger } from 'winston';
 import type { ReqSnapshot } from './expressive';
 
