@@ -1,4 +1,4 @@
-import type { ContentType, HttpMethod, OtherString } from './common';
+import type { ContentType, HttpMethod, OtherString, OtherUnknown } from './common';
 
 
 // ------------------------------------------------------------//
@@ -62,8 +62,7 @@ type BaseSchema = (
 ) | { $ref: string };
 
 // TODO: implement 'not'; a lot more to implement;
-// allow anything with unknown?
-export type Schema = BaseSchema | { allOf: Schema[] } | { anyOf: Schema[] } | { oneOf: Schema[] } | unknown;  // circular
+export type Schema = BaseSchema | { allOf: Schema[] } | { anyOf: Schema[] } | { oneOf: Schema[] } | OtherUnknown;  // circular
 
 
 export type Content = {
