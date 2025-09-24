@@ -29,7 +29,7 @@ export const buildSwaggerBuilder = (swaggerDoc: SwaggerConfig) => {
                 get() {
                     return swaggerDoc;
                 },
-            };
+            } as const;
         },
     };
 };

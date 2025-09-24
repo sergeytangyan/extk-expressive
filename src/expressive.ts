@@ -17,10 +17,8 @@ type SwaggerOptions = {
 
 export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
     return {
-        expressiveServer(configs: {
-            app?: express.Express,
-        }) {
-            const app = configs.app ?? express();
+        expressiveServer(configs?: { app?: express.Express }) {
+            const app = configs?.app ?? express();
 
             const result = {
                 get() {
@@ -67,7 +65,7 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                             .get();
                     },
                 },
-            };
+            } as const;
 
             return result;
         },
