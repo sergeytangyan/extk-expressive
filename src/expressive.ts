@@ -10,43 +10,66 @@ import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './type
 
 
 // ----------------------------------------------- //
+type SwaggerOptions = {
+    path?: ExpressRoute,
+    doc: SwaggerConfig,
+};
+
 export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
     return {
         expressiveServer(configs: {
-            swagger: {
-                path: ExpressRoute,
-                doc: SwaggerConfig,
-            },
-            options?: {
-                helmet?: Readonly<HelmetOptions>,
-                morgan?: Readonly<{
-                    format: string, // TODO: FormatFn
-                    options?: Parameters<typeof morgan>[1],
-                }>,
-            },
             app?: express.Express,
         }) {
-            const { options } = configs;
             const app = configs.app ?? express();
 
-            // secure the app
-            app.use(helmet(options?.helmet ?? {}));
+            const result = {
+                get() {
+                    return app;
+                },
+                withHelmet(options?: Readonly<HelmetOptions>) {
+                    // secure the app
+                    app.use(helmet(options ?? {}));
+                    return this;
+                },
+                withQs() {
+                    // express removes '+' sign from query string by default.
+                    app.set('query parser', function(str: string) {
+                        return qs.parse(str, { decoder(s: string) { return decodeURIComponent(s); } });
+                    });
+                    return this;
+                },
+                withMorgan(
+                    format?: string, // TODO: FormatFn
+                    options?: Parameters<typeof morgan>[1],
+                ) {
+                    app.use(morgan(
+                        format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
+                        options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
+                    ));
+                    return this;
+                },
+                withSwagger(
+                    swagger: SwaggerOptions,
+                    ...handlers: ExpressHandler[]
+                ) {
+                    app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.doc, {
+                        customSiteTitle: swagger.doc.info?.title,
+                    }));
+                    return this;
+                },
+                defaults: {
+                    get(swagger: SwaggerOptions) {
+                        return result
+                            .withHelmet()
+                            .withQs()
+                            .withMorgan()
+                            .withSwagger(swagger)
+                            .get();
+                    },
+                },
+            };
 
-            // express removes '+' sign from query string by default.
-            app.set('query parser', function(str: string) {
-                return qs.parse(str, { decoder(s: string) { return decodeURIComponent(s); } });
-            });
-
-            app.use(morgan(
-                options?.morgan?.format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
-                options?.morgan?.options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
-            ));
-
-            app.use(configs.swagger.path, swaggerUi.serve, swaggerUi.setup(configs.swagger.doc, {
-                customSiteTitle: configs.swagger.doc.info?.title,
-            }));
-
-            return app;
+            return result;
         },
 
 

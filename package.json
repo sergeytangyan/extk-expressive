@@ -1,6 +1,6 @@
 {
     "name": "@extk/expressive",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "type": "commonjs",
     "publishConfig": {
         "access": "public"
@@ -25,7 +25,7 @@
         "lint": "eslint ./"
     },
     "devDependencies": {
-        "@extk/eslint-config": "^0.2.0",
+        "@extk/eslint-config": "^0.2.1",
         "@extk/tsconfig": "0.1.1",
         "@types/chance": "^1.1.7",
         "@types/express": "^5.0.1",
