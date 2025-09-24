@@ -1,19 +1,19 @@
-import { buildExpressive } from './expressive';
-import { buildErrorHandlerMiddleware } from './middleware/errorHandlerMiddleware';
-import { notFoundMiddleware } from './middleware/notFoundMiddleware';
-import { buildSwaggerBuilder } from './swagger';
 import type { Container } from './types/common';
 import type { ReqSnapshot } from './types/expressive';
 import type { SwaggerConfig } from './types/swagger';
+
+import { buildExpressive } from './expressive';
+import { buildMiddleware } from './middleware';
+import { SwaggerBuilder } from './swagger';
+
+export type * from './types/common';
+export type * from './types/expressive';
+export type * from './types/swagger';
 
 export * from './common';
 export * from './env';
 export * from './logger';
 export { SWG } from './swagger';
-
-export type * from './types/common';
-export type * from './types/expressive';
-export type * from './types/swagger';
 
 export * from './errors';
 export * from './response/ApiErrorResponse';
@@ -30,9 +30,9 @@ export function bootstrap(container: Container) {
 
     return {
         ...buildExpressive(container, swaggerDoc),
-        ...buildSwaggerBuilder(swaggerDoc),
-        ...buildErrorHandlerMiddleware(container),
-        notFoundMiddleware,
+        ...buildMiddleware(container),
+
+        swaggerBuilder: () => new SwaggerBuilder(swaggerDoc),
 
         silently: (fn: () => Promise<void>, reqSnapshot?: ReqSnapshot) => {
             fn().catch((e: unknown) => {

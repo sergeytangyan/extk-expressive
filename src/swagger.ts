@@ -2,37 +2,33 @@ import type { ExpressRoute } from './types/expressive';
 import type { AuthMethod, Content, Param, Schema, SecurityScheme, Servers, SwaggerConfig } from './types/swagger';
 
 
-export const buildSwaggerBuilder = (swaggerDoc: SwaggerConfig) => {
-    return {
-        swaggerBuilder: () => {
-            return {
-                withInfo(info: SwaggerConfig['info']) {
-                    swaggerDoc.info = info;
-                    return this;
-                },
-                withServers(servers: Servers) {
-                    swaggerDoc.servers = servers;
-                    return this;
-                },
-                withSecuritySchemes(schemes: Record<string, SecurityScheme>) {
-                    swaggerDoc.components.securitySchemes = schemes;
-                    return this;
-                },
-                withSchemas(schemas: Record<string, Schema>) {
-                    swaggerDoc.components.schemas = schemas;
-                    return this;
-                },
-                withDefaultSecurity(globalAuthMethods: AuthMethod[]) {
-                    swaggerDoc.security = globalAuthMethods;
-                    return this;
-                },
-                get() {
-                    return swaggerDoc;
-                },
-            } as const;
-        },
-    };
-};
+export class SwaggerBuilder {
+    constructor(private swaggerDoc: SwaggerConfig) { }
+
+    withInfo(info: SwaggerConfig['info']) {
+        this.swaggerDoc.info = info;
+        return this;
+    }
+    withServers(servers: Servers) {
+        this.swaggerDoc.servers = servers;
+        return this;
+    }
+    withSecuritySchemes(schemes: Record<string, SecurityScheme>) {
+        this.swaggerDoc.components.securitySchemes = schemes;
+        return this;
+    }
+    withSchemas(schemas: Record<string, Schema>) {
+        this.swaggerDoc.components.schemas = schemas;
+        return this;
+    }
+    withDefaultSecurity(globalAuthMethods: AuthMethod[]) {
+        this.swaggerDoc.security = globalAuthMethods;
+        return this;
+    }
+    get() {
+        return this.swaggerDoc;
+    }
+}
 
 const securitySchemes = {
     BasicAuth: (): SecurityScheme => ({

@@ -1,15 +1,19 @@
 import type { NextFunction, Request, Response } from 'express';
-import { isProd } from '../env';
-import { ApiError, BadRequestError, InternalError } from '../errors';
-import { ApiErrorResponse } from '../response/ApiErrorResponse';
-import type { Container } from '../types/common';
-import { createReqSnapshot } from '../common';
+import { createReqSnapshot } from './common';
+import { isProd } from './env';
+import { ApiError, BadRequestError, InternalError } from './errors';
+import { ApiErrorResponse } from './response/ApiErrorResponse';
+import type { Container } from './types/common';
 
 
-export const buildErrorHandlerMiddleware = (container: Container) => {
+export const buildMiddleware = (container: Container) => {
     const { logger, alertHandler } = container;
 
     return {
+        notFoundMiddleware: (_req: Request, res: Response, _next: NextFunction) => {
+            res.status(404).send('¯\\_(ツ)_/¯').end();
+        },
+
         getErrorHandlerMiddleware: (errorMapper?: (err: Error & Record<string, unknown>) => ApiError | null | undefined) => {
             return async (err: Error & Record<string, unknown>, req: Request, res: Response, _next: NextFunction) => {
                 let finalError: ApiError;

@@ -15,61 +15,64 @@ type SwaggerOptions = {
     doc: SwaggerConfig,
 };
 
+export class ServerBuilder {
+    constructor(private app: express.Express, private container: Container) { }
+
+    get() {
+        return this.app;
+    }
+
+    withHelmet(options?: Readonly<HelmetOptions>) {
+        // secure the app
+        this.app.use(helmet(options ?? {}));
+        return this;
+    }
+
+    withQs() {
+        // express removes '+' sign from query string by default.
+        this.app.set('query parser', function(str: string) {
+            return qs.parse(str, { decoder(s: string) { return decodeURIComponent(s); } });
+        });
+        return this;
+    }
+
+    withMorgan(
+        format?: string, // TODO: FormatFn
+        options?: Parameters<typeof morgan>[1],
+    ) {
+        this.app.use(morgan(
+            format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
+            options ?? { stream: { write: (message: string) => { this.container.logger.info(message.trim()); } } },
+        ));
+        return this;
+    }
+
+    withSwagger(
+        swagger: SwaggerOptions,
+        ...handlers: ExpressHandler[]
+    ) {
+        this.app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.doc, {
+            customSiteTitle: swagger.doc.info?.title,
+        }));
+        return this;
+    }
+
+    withDefaults(swagger: SwaggerOptions) {
+        return this
+            .withHelmet()
+            .withQs()
+            .withMorgan()
+            .withSwagger(swagger)
+            .get();
+    }
+}
+
 export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
     return {
-        expressiveServer(configs?: { app?: express.Express }) {
+        expressiveServer(configs?: { app?: express.Express }): ServerBuilder {
             const app = configs?.app ?? express();
-
-            const result = {
-                get() {
-                    return app;
-                },
-                withHelmet(options?: Readonly<HelmetOptions>) {
-                    // secure the app
-                    app.use(helmet(options ?? {}));
-                    return this;
-                },
-                withQs() {
-                    // express removes '+' sign from query string by default.
-                    app.set('query parser', function(str: string) {
-                        return qs.parse(str, { decoder(s: string) { return decodeURIComponent(s); } });
-                    });
-                    return this;
-                },
-                withMorgan(
-                    format?: string, // TODO: FormatFn
-                    options?: Parameters<typeof morgan>[1],
-                ) {
-                    app.use(morgan(
-                        format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
-                        options ?? { stream: { write(message: string) { container.logger.info(message.trim()); } } },
-                    ));
-                    return this;
-                },
-                withSwagger(
-                    swagger: SwaggerOptions,
-                    ...handlers: ExpressHandler[]
-                ) {
-                    app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.doc, {
-                        customSiteTitle: swagger.doc.info?.title,
-                    }));
-                    return this;
-                },
-                defaults: {
-                    get(swagger: SwaggerOptions) {
-                        return result
-                            .withHelmet()
-                            .withQs()
-                            .withMorgan()
-                            .withSwagger(swagger)
-                            .get();
-                    },
-                },
-            } as const;
-
-            return result;
+            return new ServerBuilder(app, container);
         },
-
 
         expressiveRouter(configs: {
             oapi?: {
@@ -138,5 +141,5 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                 },
             };
         },
-    };
+    } as const;
 }
