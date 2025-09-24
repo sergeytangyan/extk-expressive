@@ -1,4 +1,4 @@
-import type { ContentType, HttpMethod } from './common';
+import type { ContentType, HttpMethod, OtherString } from './common';
 
 
 // ------------------------------------------------------------//
@@ -13,20 +13,22 @@ type NumericConfigs = {
     multipleOf?: number,
 };
 
-type NumberType = { type: 'number', format?: 'float' | 'double' } & NumericConfigs;
-type IntegerType = { type: 'integer', format?: 'int32' | 'int64' } & NumericConfigs;
-type StringType = {
+type NumberSchema = { type: 'number', format?: 'float' | 'double' } & NumericConfigs;
+type IntegerSchema = { type: 'integer', format?: 'int32' | 'int64' } & NumericConfigs;
+
+type StringSchema = {
     type: 'string',
     minLength?: number,
     maxLength?: number,
-    format?: 'date' | 'date-time' | 'password' | 'byte' | 'binary' | 'email' | 'uuid' | 'uri' | 'hostname' | 'ipv4' | 'ipv6';
+    format?: 'date' | 'date-time' | 'password' | 'byte' | 'binary' | 'email' | 'uuid' | 'uri' | 'hostname' | 'ipv4' | 'ipv6' | OtherString;
     pattern?: string,
 };
-type BooleanType = {
+
+type BooleanSchema = {
     type: 'boolean',
 };
 
-type ArrayType = {
+type ArraySchema = {
     type: 'array',
     items: Partial<Schema>, // circular
     minItems?: number,
@@ -34,7 +36,7 @@ type ArrayType = {
     uniqueItems?: boolean,
 };
 
-type ObjectType = {
+type ObjectSchema = {
     type: 'object',
     properties?: Record<string, Schema>, // circular
     required?: string[],
@@ -50,17 +52,18 @@ type BaseSchema = (
         description?: string,
         default?: unknown,
     } & (
-        StringType |
-        NumberType |
-        IntegerType |
-        BooleanType |
-        ArrayType |
-        ObjectType
+        StringSchema |
+        NumberSchema |
+        IntegerSchema |
+        BooleanSchema |
+        ArraySchema |
+        ObjectSchema
     )
-) |
-{ $ref: string };
+) | { $ref: string };
 
-export type Schema = BaseSchema | { allOf: BaseSchema[] } | { anyOf: BaseSchema[] } | { oneOf: BaseSchema[] };
+// TODO: implement 'not'; a lot more to implement;
+// allow anything with unknown?
+export type Schema = BaseSchema | { allOf: Schema[] } | { anyOf: Schema[] } | { oneOf: Schema[] } | unknown;  // circular
 
 
 export type Content = {
