@@ -1,5 +1,5 @@
 export class ApiResponse<T = undefined> {
-    status = 'ok';
+    readonly status = 'ok';
     result?: T;
 
     constructor(result?: T) {

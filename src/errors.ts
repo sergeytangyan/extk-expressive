@@ -1,7 +1,7 @@
 export class ApiError extends Error {
-    public readonly code: string;
-    public readonly httpStatusCode: number;
-    public data?: unknown;
+    readonly code: string;
+    readonly httpStatusCode: number;
+    data?: unknown;
 
 
     constructor(message: string, httpStatusCode: number, errorCode: string) {

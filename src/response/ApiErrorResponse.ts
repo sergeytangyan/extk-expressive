@@ -1,8 +1,8 @@
 export class ApiErrorResponse<T = undefined> {
-    public readonly status = 'error';
-    public readonly message: string;
-    public readonly errorCode: string;
-    public readonly errors?: T;
+    readonly status = 'error';
+    readonly message: string;
+    readonly errorCode: string;
+    readonly errors?: T;
 
 
     constructor(message: string, errorCode: string, errors?: T) {

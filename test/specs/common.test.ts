@@ -27,6 +27,6 @@ describe('slugify', () => {
 
         const result = slugify(input);
 
-        assert(result, input.toLowerCase());
+        assert.equal(result, input.toLowerCase());
     });
 });
