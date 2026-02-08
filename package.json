@@ -1,6 +1,6 @@
 {
     "name": "@extk/expressive",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "type": "commonjs",
     "publishConfig": {
         "access": "public"
@@ -16,7 +16,7 @@
         }
     },
     "engines": {
-        "node": ">=22.0.0 <23.0.0"
+        "node": ">=22.0.0"
     },
     "scripts": {
         "build": "tsup",
@@ -51,5 +51,22 @@
     },
     "author": "",
     "license": "ISC",
-    "description": ""
+    "description": "Production-ready Express 5 toolkit with auto-generated OpenAPI docs, structured error handling, and logging",
+    "keywords": [
+        "express",
+        "express5",
+        "openapi",
+        "swagger",
+        "api",
+        "rest",
+        "middleware",
+        "error-handling",
+        "logging",
+        "winston",
+        "helmet",
+        "typescript",
+        "zod",
+        "api-framework",
+        "express-toolkit"
+    ]
 }
