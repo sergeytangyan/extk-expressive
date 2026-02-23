@@ -1,5 +1,4 @@
 import type { Container } from './types/common';
-import type { ReqSnapshot } from './types/expressive';
 import type { SwaggerConfig } from './types/swagger';
 
 import { buildExpressive } from './expressive';
@@ -12,7 +11,6 @@ export type * from './types/swagger';
 
 export * from './common';
 export * from './env';
-export * from './logger';
 export { SWG } from './swagger';
 
 export * from './errors';
@@ -34,14 +32,16 @@ export function bootstrap(container: Container) {
 
         swaggerBuilder: () => new SwaggerBuilder(swaggerDoc),
 
-        silently: (fn: () => Promise<void>, reqSnapshot?: ReqSnapshot) => {
-            fn().catch((e: unknown) => {
+        silently: async (fn: () => Promise<void> | void) => {
+            try {
+                await fn();
+            } catch (e: unknown) {
                 if (container.alertHandler && e instanceof Error) {
-                    container.alertHandler(e, reqSnapshot);
+                    container.alertHandler(e);
                 } else {
                     container.logger.error(e);
                 }
-            });
+            }
         },
     };
 }

@@ -1,6 +1,5 @@
 import path from 'path';
-import type { Pagination, PaginationQuery, ReqSnapshot } from './types/expressive';
-import type { Request } from 'express';
+import type { Pagination, PaginationQuery } from './types/expressive';
 import { ApiError } from './errors';
 
 
@@ -44,13 +43,4 @@ export function parseDefaultPagination(query: PaginationQuery): Pagination {
     const offset = (page - 1) * limit;
 
     return { limit, offset };
-}
-
-export function createReqSnapshot(req: Request & { user?: { id?: string | number } }): ReqSnapshot {
-    return {
-        query: req.query,
-        path: req.path,
-        method: req.method,
-        userId: req?.user?.id,
-    } as const;
 }

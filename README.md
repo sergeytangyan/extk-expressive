@@ -40,17 +40,18 @@ npm install @extk/expressive express
 
 ```ts
 import express from 'express';
-import { bootstrap, getDefaultFileLogger, ApiResponse, NotFoundError, SWG } from '@extk/expressive';
+import { bootstrap, ApiResponse, NotFoundError, SWG } from '@extk/expressive';
 
-// 1. Bootstrap with a logger
+// 1. Bootstrap with a logger (bring your own)
 const {
   expressiveServer,
   expressiveRouter,
   swaggerBuilder,
   notFoundMiddleware,
   getErrorHandlerMiddleware,
+  silently,
 } = bootstrap({
-  logger: getDefaultFileLogger('my-api'),
+  logger: console, // any object with info/warn/error/debug
 });
 
 // 2. Configure swagger metadata
@@ -246,16 +247,56 @@ addRoute({
 
 This way your Zod schemas serve as the single source of truth for both runtime validation and API documentation.
 
-## Logging
+## silently
 
-Winston-based logging with daily rotating files in production and console output in development.
+`silently` runs a function — sync or async — and suppresses any errors it throws. Errors are forwarded to `alertHandler` (if configured) or logged via the container logger.
 
 ```ts
-import { getDefaultFileLogger, getDefaultConsoleLogger } from '@extk/expressive';
+// fire-and-forget without crashing the process
+silently(() => sendAnalyticsEvent(req));
+silently(async () => await notifySlack('Server started'));
+```
 
-const logger = getDefaultFileLogger('my-service'); // logs to ./logs/my-service-YYYY-MM-DD.log
-logger.info('Server started on port %d', 3000);
-logger.error('Something went wrong: %s', err.message);
+## Logging
+
+Expressive does not bundle a logger. Instead, `bootstrap` accepts any object that satisfies the `Logger` interface:
+
+```ts
+export type Logger = {
+  info(message: string, ...args: any[]): void;
+  error(message: string | Error | unknown, ...args: any[]): void;
+  warn(message: string, ...args: any[]): void;
+  debug(message: string, ...args: any[]): void;
+};
+```
+
+This means you can pass `console` directly, or plug in any logging library (Winston, Pino, etc.):
+
+```ts
+bootstrap({ logger: console });
+```
+
+The `@extk/logger-cloudwatch` package from the same org is a drop-in fit:
+
+```ts
+import { getCloudwatchLogger, getConsoleLogger } from '@extk/logger-cloudwatch';
+
+// development
+bootstrap({ logger: getConsoleLogger() });
+
+// production — streams structured JSON logs to AWS CloudWatch
+bootstrap({
+  logger: getCloudwatchLogger({
+    aws: {
+      region: 'us-east-1',
+      logGroup: '/my-app/production',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    },
+  }),
+});
 ```
 
 ## Utilities

@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from 'express';
-import { createReqSnapshot } from './common';
 import { isProd } from './env';
 import { ApiError, BadRequestError, InternalError } from './errors';
 import { ApiErrorResponse } from './response/ApiErrorResponse';
@@ -42,7 +41,7 @@ export const buildMiddleware = (container: Container) => {
                     }
 
                     if (alertHandler) {
-                        alertHandler(err, createReqSnapshot(req));
+                        alertHandler(err);
                     }
 
                     finalError = new InternalError();
