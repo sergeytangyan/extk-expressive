@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { isProd } from './env';
-import { ApiError, BadRequestError, InternalError } from './errors';
+import { ApiError, BadRequestError, InternalError, UserUnauthorizedError } from './errors';
 import { ApiErrorResponse } from './response/ApiErrorResponse';
 import type { Container } from './types/common';
 
@@ -51,6 +51,37 @@ export const buildMiddleware = (container: Container) => {
                 }
 
                 res.status(finalError.httpStatusCode).json(new ApiErrorResponse(finalError.message, finalError.code, finalError.data));
+            };
+        },
+
+        getBasicAuthMiddleware: (basicAuthBase64: string, basicRealm?: string) => {
+            return (req: Request, res: Response, next: NextFunction) => {
+                try {
+                    const token = req.header('authorization');
+                    if (!token || token.indexOf('Basic ') === -1) {
+                        throw new UserUnauthorizedError('Missing Authorization Header');
+                    }
+
+                    const credentials = token.split(' ')[1];
+
+                    if (basicAuthBase64 !== credentials) {
+                        throw new UserUnauthorizedError('Invalid Authentication Credentials');
+                    }
+
+                    next();
+                } catch (error) {
+                    if (basicRealm) {
+                        res.set('WWW-Authenticate', `Basic realm="${basicRealm}"`);
+                    }
+
+                    if (error instanceof ApiError) {
+                        return next(error);
+                    }
+
+                    // catch all unknown errors
+                    logger.error(error);
+                    return next(new UserUnauthorizedError());
+                }
             };
         },
     };
