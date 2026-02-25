@@ -114,7 +114,15 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
 
                     const pathItem: PathItem & Required<Pick<PathItem, 'responses' | 'parameters'>> = {
                         // -- defaults --
-                        responses: {}, // has to be defined or else responses are not documented... ¯\_(ツ)_/¯
+                        responses: { // has to be defined or else responses are not documented... ¯\_(ツ)_/¯
+                            '200': { description: 'OK' },
+                            '201': { description: 'Created' },
+                            '204': { description: 'No Content' },
+                            '400': { description: 'Bad Request' },
+                            '401': { description: 'User Unauthorized' },
+                            '403': { description: 'Forbidden' },
+                            '500': { description: 'Internal Server Error' },
+                        },
                         // -- group defaults --
                         ...(configs?.oapi || {}),
                         // -- overrides --
