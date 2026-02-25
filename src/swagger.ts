@@ -69,6 +69,16 @@ const security = (name: string): AuthMethod => {
 };
 
 // ----------------------------------------------- //
+function formDataSchema(schema: Schema): Content {
+    return {
+        content: {
+            'multipart/form-data': {
+                schema,
+            },
+        },
+    };
+}
+
 function jsonSchema(schema: Schema): Content {
     return {
         content: {
@@ -131,6 +141,7 @@ export const SWG = {
     pathParam,
     queryParam,
     headerParam,
+    formDataSchema,
     jsonSchema,
     jsonSchemaRef,
     security,
