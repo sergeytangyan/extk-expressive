@@ -5,19 +5,22 @@ import type { ContentType, HttpMethod, OtherString, OtherUnknown } from './commo
 // https://swagger.io/docs/specification/v3_0/basic-structure/ //
 // ------------------------------------------------------------//
 
+// allows type: 'string' or type: ['string', 'null']
+type Nullable<T extends string> = T | [T, 'null'] | ['null', T];
+
 type NumericConfigs = {
     minimum?: number,
     maximum?: number,
-    exclusiveMinimum?: boolean,
-    exclusiveMaximum?: boolean,
+    exclusiveMinimum?: number,
+    exclusiveMaximum?: number,
     multipleOf?: number,
 };
 
-type NumberSchema = { type: 'number', format?: 'float' | 'double' } & NumericConfigs;
-type IntegerSchema = { type: 'integer', format?: 'int32' | 'int64' } & NumericConfigs;
+type NumberSchema = { type: Nullable<'number'>, format?: 'float' | 'double' } & NumericConfigs;
+type IntegerSchema = { type: Nullable<'integer'>, format?: 'int32' | 'int64' } & NumericConfigs;
 
 type StringSchema = {
-    type: 'string',
+    type: Nullable<'string'>,
     minLength?: number,
     maxLength?: number,
     format?: 'date' | 'date-time' | 'password' | 'byte' | 'binary' | 'email' | 'uuid' | 'uri' | 'hostname' | 'ipv4' | 'ipv6' | OtherString;
@@ -25,19 +28,23 @@ type StringSchema = {
 };
 
 type BooleanSchema = {
-    type: 'boolean',
+    type: Nullable<'boolean'>,
+};
+
+type NullSchema = {
+    type: 'null',
 };
 
 type ArraySchema = {
-    type: 'array',
-    items: Partial<Schema>, // circular
+    type: Nullable<'array'>,
+    items?: Schema, // circular
     minItems?: number,
     maxItems?: number,
     uniqueItems?: boolean,
 };
 
 type ObjectSchema = {
-    type: 'object',
+    type: Nullable<'object'>,
     properties?: Record<string, Schema>, // circular
     required?: string[],
     additionalProperties?: boolean | Schema, // circular
@@ -45,24 +52,43 @@ type ObjectSchema = {
     maxProperties?: number,
 };
 
-type BaseSchema = (
-    {
-        nullable?: boolean,
-        enum?: unknown[],
-        description?: string,
-        default?: unknown,
-    } & (
-        StringSchema |
-        NumberSchema |
-        IntegerSchema |
-        BooleanSchema |
-        ArraySchema |
-        ObjectSchema
-    )
-) | { $ref: string };
+type Discriminator = {
+    propertyName: string,
+    mapping?: Record<string, string>,
+};
 
-// TODO: implement 'not'; a lot more to implement;
-export type Schema = BaseSchema | { allOf: Schema[] } | { anyOf: Schema[] } | { oneOf: Schema[] } | OtherUnknown;  // circular
+type CommonSchemaProps = {
+    title?: string,
+    description?: string,
+    example?: unknown,
+    default?: unknown,
+    enum?: unknown[],
+    const?: unknown,
+    readOnly?: boolean,
+    writeOnly?: boolean,
+    deprecated?: boolean,
+};
+
+// in OAS 3.1, $ref can coexist with other properties
+type BaseSchema = CommonSchemaProps & (
+    StringSchema |
+    NumberSchema |
+    IntegerSchema |
+    BooleanSchema |
+    NullSchema |
+    ArraySchema |
+    ObjectSchema |
+    { $ref: string }
+);
+
+export type Schema = // circular
+    BaseSchema |
+    (CommonSchemaProps & { allOf: Schema[], discriminator?: Discriminator }) |
+    (CommonSchemaProps & { anyOf: Schema[], discriminator?: Discriminator }) |
+    (CommonSchemaProps & { oneOf: Schema[], discriminator?: Discriminator }) |
+    (CommonSchemaProps & { not: Schema }) |
+    (CommonSchemaProps & { if: Schema, then?: Schema, else?: Schema }) |
+    OtherUnknown;
 
 
 export type Content = {
@@ -72,7 +98,7 @@ export type Content = {
     }>>,
 };
 export type Param = {
-    in: 'path' | 'query' | 'headers', // TODO cookies
+    in: 'path' | 'query' | 'header' | 'cookie',
     name: string,
     description: string,
     required: boolean,
@@ -86,6 +112,7 @@ export type Servers = {
 
 export type PathItem = {
     summary?: string,
+    description?: string,
     requestBody?: Content,
     parameters?: Param[],
     servers?: Servers
@@ -96,6 +123,7 @@ export type PathItem = {
     security?: AuthMethod[]
 };
 
+/** { BearerAuth: [] } | { OAuth2: ['read', 'write'] } */
 export type AuthMethod = Record<string, string[]>;
 
 export type SecurityScheme = {
@@ -103,7 +131,7 @@ export type SecurityScheme = {
     scheme: 'basic' | 'bearer',
 } | {
     type: 'apiKey',
-    in: 'header',
+    in: 'header' | 'query' | 'cookie',
     name: string,
 } | {
     type: 'openIdConnect',
@@ -120,7 +148,7 @@ export type SecurityScheme = {
 };
 
 export type SwaggerConfig = {
-    openapi: '3.1.0', // TODO
+    openapi: '3.1.0',
     info?: {
         version?: string,
         title?: string,

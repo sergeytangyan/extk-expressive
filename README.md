@@ -16,6 +16,29 @@
 
 ---
 
+## Table of Contents
+
+- [What is this?](#what-is-this)
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [Error Handling](#error-handling)
+- [OpenAPI / Swagger](#openapi--swagger)
+  - [File uploads](#file-uploads)
+  - [Using Zod schemas for OpenAPI](#using-zod-schemas-for-openapi)
+- [Middleware](#middleware)
+  - [getApiErrorHandlerMiddleware](#getapierrorhandlermiddleware)
+  - [getApiNotFoundMiddleware](#getapinotfoundmiddleware)
+  - [getGlobalNotFoundMiddleware](#getglobalnotfoundmiddleware)
+  - [getGlobalErrorHandlerMiddleware](#getglobalerrorhandlermiddleware)
+  - [getBasicAuthMiddleware](#getbasicauthmiddleware)
+- [silently](#silently)
+- [Logging](#logging)
+- [Utilities](#utilities)
+- [API Response Format](#api-response-format)
+- [License](#license)
+
+---
+
 ## What is this?
 
 `@extk/expressive` is an opinionated toolkit for Express 5 that wires up the things every API needs but nobody wants to set up from scratch:
@@ -171,6 +194,38 @@ addRoute(
 );
 ```
 
+### File uploads
+
+Use `SWG.singleFileSchema` for a single file field, or `SWG.formDataSchema` for a custom multipart body:
+
+```ts
+// single file — field name defaults to 'file', required defaults to true
+addRoute({
+  method: 'post',
+  path: '/upload',
+  oapi: {
+    requestBody: SWG.singleFileSchema(),
+    // requestBody: SWG.singleFileSchema('avatar', true),
+  },
+}, handler);
+
+// custom multipart schema with multiple fields
+addRoute({
+  method: 'post',
+  path: '/upload/rich',
+  oapi: {
+    requestBody: SWG.formDataSchema({
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        title: { type: 'string' },
+      },
+      required: ['file'],
+    }),
+  },
+}, handler);
+```
+
 Configure security schemes via the swagger builder:
 
 ```ts
@@ -260,6 +315,55 @@ addRoute({
 ```
 
 This way your Zod schemas serve as the single source of truth for both runtime validation and API documentation.
+
+## Middleware
+
+All middleware factories are returned from `bootstrap()`.
+
+### `getApiErrorHandlerMiddleware(errorMapper?)`
+
+Express error handler for API routes. Catches `ApiError` subclasses, handles malformed JSON, and falls back to `InternalError` for unknown errors. Pass an optional `errorMapper` to map third-party errors (e.g. Zod, Multer) to typed `ApiError` instances.
+
+```ts
+app.use(getApiErrorHandlerMiddleware((err) => {
+  if (err.name === 'ZodError') return new SchemaValidationError('Validation failed').setData(err.issues);
+  return null;
+}));
+```
+
+### `getApiNotFoundMiddleware()`
+
+Returns a JSON `404` response for unmatched API routes.
+
+```ts
+app.use(getApiNotFoundMiddleware());
+// { status: 'error', message: 'GET /unknown not found', errorCode: 'NOT_FOUND' }
+```
+
+### `getGlobalNotFoundMiddleware(content?)`
+
+Returns a plain-text `404`. Useful as the last catch-all for non-API routes. Defaults to `¯\_(ツ)_/¯`.
+
+```ts
+app.use(getGlobalNotFoundMiddleware());
+app.use(getGlobalNotFoundMiddleware('Not found'));
+```
+
+### `getGlobalErrorHandlerMiddleware()`
+
+Minimal error handler that logs and responds with a plain-text `500`. Use this outside of API route groups where JSON responses aren't expected.
+
+### `getBasicAuthMiddleware(basicAuthBase64, realm?)`
+
+Protects a route or the Swagger UI with HTTP Basic auth. Accepts a pre-encoded base64 `user:password` string.
+
+```ts
+expressiveServer()
+  .withSwagger(
+    { config: swaggerDoc },
+    getBasicAuthMiddleware(process.env.SWAGGER_AUTH!, 'API Docs'),
+  )
+```
 
 ## silently
 

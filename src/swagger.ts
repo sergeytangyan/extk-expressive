@@ -25,7 +25,7 @@ export class SwaggerBuilder {
         this.swaggerDoc.security = globalAuthMethods;
         return this;
     }
-    get() {
+    build() {
         return this.swaggerDoc;
     }
 }
@@ -69,6 +69,24 @@ const security = (name: string): AuthMethod => {
 };
 
 // ----------------------------------------------- //
+function singleFileSchema(field = 'file', required = true): Content {
+    const schema: Schema = {
+        type: 'object',
+        properties: {
+            [field]: { type: 'string', format: 'binary' },
+        },
+        ...(required && { required: [field] }),
+    };
+
+    return {
+        content: {
+            'multipart/form-data': {
+                schema,
+            },
+        },
+    };
+}
+
 function formDataSchema(schema: Schema): Content {
     return {
         content: {
@@ -114,7 +132,7 @@ function queryParam(id: string, schema: Schema, required = true, description = '
 }
 
 function headerParam(id: string, schema: Schema, required = true, description = '', name?: string): Param {
-    return param('headers', id, schema, required, description, name);
+    return param('header', id, schema, required, description, name);
 }
 
 // ----------------------------------------------- //
@@ -141,9 +159,12 @@ export const SWG = {
     pathParam,
     queryParam,
     headerParam,
+
     formDataSchema,
     jsonSchema,
     jsonSchemaRef,
+    singleFileSchema,
+
     security,
     securitySchemes,
 };
