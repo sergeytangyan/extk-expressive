@@ -12,13 +12,13 @@ import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './type
 // ----------------------------------------------- //
 type SwaggerOptions = {
     path?: ExpressRoute,
-    doc: SwaggerConfig,
+    config: SwaggerConfig,
 };
 
 export class ServerBuilder {
     constructor(private app: express.Express, private container: Container) { }
 
-    get() {
+    build() {
         return this.app;
     }
 
@@ -47,12 +47,25 @@ export class ServerBuilder {
         return this;
     }
 
+    withRoutes(routes: ExpressRoute) {
+        this.app.use(routes);
+        return this;
+    }
+
+    /**
+     * Helper function for fluent design
+     */
+    with(fn: (app: express.Express, container: Container) => void) {
+        fn(this.app, this.container);
+        return this;
+    }
+
     withSwagger(
         swagger: SwaggerOptions,
         ...handlers: ExpressHandler[]
     ) {
-        this.app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.doc, {
-            customSiteTitle: swagger.doc.info?.title,
+        this.app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.config, {
+            customSiteTitle: swagger.config.info?.title,
         }));
         return this;
     }

@@ -22,7 +22,7 @@
 
 - **Auto-generated OpenAPI 3.1 docs** from your route definitions
 - **Structured error handling** with typed error classes and consistent JSON responses
-- **Winston logging** with daily file rotation and dev/prod modes
+- **Bring-your-own logger** — any object with `info/warn/error/debug` works
 - **Security defaults** via Helmet, safe query parsing, and morgan request logging
 - **Standardized responses** (`ApiResponse` / `ApiErrorResponse`) across your entire API
 
@@ -58,17 +58,9 @@ const {
 const swaggerDoc = swaggerBuilder()
   .withInfo({ title: 'My API', version: '1.0.0' })
   .withServers([{ url: 'http://localhost:3000' }])
-  .get();
+  .build();
 
-// 3. Build the Express app
-const app = expressiveServer()
-  .withHelmet()
-  .withQs()
-  .withMorgan()
-  .withSwagger({ path: '/api-docs', doc: swaggerDoc })
-  .get();
-
-// 4. Define routes — they auto-register in the OpenAPI spec
+// 3. Define routes — they auto-register in the OpenAPI spec
 const { router, addRoute } = expressiveRouter({
   oapi: { tags: ['Users'] },
 });
@@ -89,10 +81,24 @@ addRoute(
   },
 );
 
-// 5. Mount the router and error handling
-app.use(router);
-app.use(getErrorHandlerMiddleware());
-app.use(notFoundMiddleware);
+```
+
+> [!IMPORTANT]
+> Method call order on `ServerBuilder` matters — middleware is registered in the order you chain it.
+
+```ts
+// 4. Build the Express app
+const app = expressiveServer()
+  .withHelmet()
+  .withQs()
+  .withMorgan()
+  .withRoutes(router)
+  .withSwagger({ path: '/api-docs', config: swaggerDoc })
+  .with((app) => {
+    app.use(getErrorHandlerMiddleware());
+    app.use(notFoundMiddleware);
+  })
+  .build();
 
 app.listen(3000);
 ```
@@ -211,7 +217,7 @@ const app = expressiveServer()
   .withQs()
   .withMorgan()
   .withSwagger({
-    doc: swaggerBuilder()
+    config: swaggerBuilder()
       .withInfo({ title: 'My API' })
       .withServers([{ url: 'http://localhost:3000/api' }])
       .withSchemas(z.toJSONSchema(z.globalRegistry).schemas) // all Zod schemas -> OpenAPI
@@ -219,7 +225,7 @@ const app = expressiveServer()
       .withDefaultSecurity([SWG.security('auth')])
       .get(),
   })
-  .get();
+  .build();
 ```
 
 **3. Reference them in routes with `SWG.jsonSchemaRef`:**
