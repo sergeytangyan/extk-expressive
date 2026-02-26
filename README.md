@@ -60,9 +60,13 @@ const swaggerDoc = swaggerBuilder()
   .withServers([{ url: 'http://localhost:3000' }])
   .get();
 
-// 3. Build the Express app with sensible defaults (helmet, morgan, swagger UI)
+// 3. Build the Express app
 const app = expressiveServer()
-  .withDefaults({ path: '/api-docs', doc: swaggerDoc });
+  .withHelmet()
+  .withQs()
+  .withMorgan()
+  .withSwagger({ path: '/api-docs', doc: swaggerDoc })
+  .get();
 
 // 4. Define routes — they auto-register in the OpenAPI spec
 const { router, addRoute } = expressiveRouter({
@@ -203,7 +207,10 @@ export const loginSchema = z.object({
 import z from 'zod';
 
 const app = expressiveServer()
-  .withDefaults({
+  .withHelmet()
+  .withQs()
+  .withMorgan()
+  .withSwagger({
     doc: swaggerBuilder()
       .withInfo({ title: 'My API' })
       .withServers([{ url: 'http://localhost:3000/api' }])
@@ -211,7 +218,8 @@ const app = expressiveServer()
       .withSecuritySchemes({ auth: SWG.securitySchemes.BearerAuth() })
       .withDefaultSecurity([SWG.security('auth')])
       .get(),
-  });
+  })
+  .get();
 ```
 
 **3. Reference them in routes with `SWG.jsonSchemaRef`:**

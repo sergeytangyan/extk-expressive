@@ -56,15 +56,6 @@ export class ServerBuilder {
         }));
         return this;
     }
-
-    withDefaults(swagger: SwaggerOptions) {
-        return this
-            .withHelmet()
-            .withQs()
-            .withMorgan()
-            .withSwagger(swagger)
-            .get();
-    }
 }
 
 export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
