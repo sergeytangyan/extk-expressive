@@ -9,11 +9,22 @@ export const buildMiddleware = (container: Container) => {
     const { logger, alertHandler } = container;
 
     return {
-        notFoundMiddleware: (_req: Request, res: Response, _next: NextFunction) => {
-            res.status(404).send('¯\\_(ツ)_/¯').end();
+        getGlobalNotFoundMiddleware: (content?: string) => {
+            return (_req: Request, res: Response, _next: NextFunction) => {
+                res.status(404).send(content ?? '¯\\_(ツ)_/¯').end();
+            };
         },
 
-        getErrorHandlerMiddleware: (errorMapper?: (err: Error & Record<string, unknown>) => ApiError | null | undefined) => {
+        getApiNotFoundMiddleware: () => {
+            return (req: Request, res: Response, _next: NextFunction) => {
+                res
+                    .status(404)
+                    .json(new ApiErrorResponse(`${req.method} ${req.path} not found`, 'NOT_FOUND'))
+                    .end();
+            };
+        },
+
+        getApiErrorHandlerMiddleware: (errorMapper?: (err: Error & Record<string, unknown>) => ApiError | null | undefined) => {
             return async (err: Error & Record<string, unknown>, req: Request, res: Response, _next: NextFunction) => {
                 let finalError: ApiError;
 
@@ -51,6 +62,18 @@ export const buildMiddleware = (container: Container) => {
                 }
 
                 res.status(finalError.httpStatusCode).json(new ApiErrorResponse(finalError.message, finalError.code, finalError.data));
+            };
+        },
+
+        getGlobalErrorHandlerMiddleware: () => {
+            return (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+                logger.error(err);
+
+                if (err instanceof ApiError) {
+                    res.status(err.httpStatusCode).send(err.message);
+                } else {
+                    res.status(500).send('Something went wrong');
+                }
             };
         },
 
