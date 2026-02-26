@@ -47,7 +47,7 @@ export class ServerBuilder {
         return this;
     }
 
-    withRoutes(routes: ExpressRoute) {
+    withRoutes(routes: express.Router) {
         this.app.use(routes);
         return this;
     }
