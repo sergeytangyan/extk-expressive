@@ -3,30 +3,41 @@ import type { AuthMethod, Content, Param, Schema, SecurityScheme, Servers, Swagg
 
 
 export class SwaggerBuilder {
-    constructor(private swaggerDoc: SwaggerConfig) { }
+    private doc: SwaggerConfig | null;
+
+    constructor(swaggerDoc: SwaggerConfig) {
+        this.doc = swaggerDoc;
+    }
+
+    private getDoc() {
+        if (!this.doc) throw new Error('SwaggerBuilder.build() has already been called');
+        return this.doc;
+    }
 
     withInfo(info: SwaggerConfig['info']) {
-        this.swaggerDoc.info = info;
+        this.getDoc().info = info;
         return this;
     }
     withServers(servers: Servers) {
-        this.swaggerDoc.servers = servers;
+        this.getDoc().servers = servers;
         return this;
     }
     withSecuritySchemes(schemes: Record<string, SecurityScheme>) {
-        this.swaggerDoc.components.securitySchemes = schemes;
+        this.getDoc().components.securitySchemes = schemes;
         return this;
     }
     withSchemas(schemas: Record<string, Schema>) {
-        this.swaggerDoc.components.schemas = schemas;
+        this.getDoc().components.schemas = schemas;
         return this;
     }
     withDefaultSecurity(globalAuthMethods: AuthMethod[]) {
-        this.swaggerDoc.security = globalAuthMethods;
+        this.getDoc().security = globalAuthMethods;
         return this;
     }
     build() {
-        return this.swaggerDoc;
+        const doc = this.getDoc();
+        this.doc = null;
+        return doc;
     }
 }
 

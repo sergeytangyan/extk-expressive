@@ -2,23 +2,37 @@ import express from 'express';
 import helmet, { type HelmetOptions } from 'helmet';
 import morgan from 'morgan';
 import qs from 'qs';
-import swaggerUi from 'swagger-ui-express';
-import { convertExpressPath, tryParsePathParameters } from './swagger';
+import swaggerUi, { type SwaggerOptions, type SwaggerUiOptions } from 'swagger-ui-express';
+import { convertExpressPath, SwaggerBuilder, tryParsePathParameters } from './swagger';
 import type { Container, HttpMethod } from './types/common';
 import type { ExpressHandler, ExpressRoute } from './types/expressive';
 import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './types/swagger';
 
 
-// ----------------------------------------------- //
-type SwaggerOptions = {
-    path?: ExpressRoute,
-    config: SwaggerConfig,
+// allowing null cause we are going to hard delete the object, not to store in memory
+type SwaggerRef = { doc: SwaggerConfig | null };
+
+type ExpressiveSwaggerOptions = {
+    path?: ExpressRoute;
+
+    uiOpts?: SwaggerUiOptions,
+    options?: SwaggerOptions,
+    customCss?: string,
+    customfavIcon?: string,
+    swaggerUrl?: string,
+    customSiteTitle?: string,
+
 };
 
 export class ServerBuilder {
-    constructor(private app: express.Express, private container: Container) { }
+    constructor(
+        private app: express.Express,
+        private container: Container,
+        private swaggerRef: SwaggerRef,
+    ) { }
 
     build() {
+        this.swaggerRef.doc = null;
         return this.app;
     }
 
@@ -61,21 +75,54 @@ export class ServerBuilder {
     }
 
     withSwagger(
-        swagger: SwaggerOptions,
+        opts: ExpressiveSwaggerOptions,
         ...handlers: ExpressHandler[]
     ) {
-        this.app.use(swagger.path ?? '/api-docs', ...handlers, swaggerUi.serve, swaggerUi.setup(swagger.config, {
-            customSiteTitle: swagger.config.info?.title,
-        }));
+        const config = this.swaggerRef.doc;
+        if (!config) throw new Error('withSwagger must be called before build()');
+
+        const uiOptsWithDefaults: SwaggerUiOptions = {
+            customSiteTitle: config.info?.title,
+            ...opts.uiOpts,
+        };
+
+        this.app.use(opts.path ?? '/api-docs',
+            ...handlers,
+            swaggerUi.serve,
+            swaggerUi.setup(
+                config,
+                uiOptsWithDefaults,
+                opts.options,
+                opts.customCss,
+                opts.customfavIcon,
+                opts.swaggerUrl,
+                opts.customSiteTitle,
+            ),
+        );
+
         return this;
     }
 }
 
-export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig) {
+export function buildExpressive(container: Container) {
+    const swaggerRef: SwaggerRef = {
+        doc: {
+            openapi: '3.1.0',
+            info: {},
+            paths: {},
+            components: {},
+        },
+    };
+
     return {
         expressiveServer(configs?: { app?: express.Express }): ServerBuilder {
             const app = configs?.app ?? express();
-            return new ServerBuilder(app, container);
+            return new ServerBuilder(app, container, swaggerRef);
+        },
+
+        swaggerBuilder: () => {
+            if (!swaggerRef.doc) throw new Error('swaggerBuilder cannot be called after withSwagger');
+            return new SwaggerBuilder(swaggerRef.doc);
         },
 
         expressiveRouter(configs: {
@@ -144,10 +191,12 @@ export function buildExpressive(container: Container, swaggerDoc: SwaggerConfig)
                         pathItem.parameters.push(...tryParsePathParameters(route));
                     }
 
-                    if (!swaggerDoc.paths[route]) {
-                        swaggerDoc.paths[route] = {};
+                    if (swaggerRef.doc) {
+                        if (!swaggerRef.doc.paths[route]) {
+                            swaggerRef.doc.paths[route] = {};
+                        }
+                        swaggerRef.doc.paths[route][context.method] = pathItem;
                     }
-                    swaggerDoc.paths[route][context.method] = pathItem;
 
                     return router;
                 },
