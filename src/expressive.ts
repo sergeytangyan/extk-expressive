@@ -13,7 +13,7 @@ import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './type
 type SwaggerRef = { doc: SwaggerConfig | null };
 
 type ExpressiveSwaggerOptions = {
-    path?: ExpressRoute;
+    path: ExpressRoute,
 
     uiOpts?: SwaggerUiOptions,
     options?: SwaggerOptions,
@@ -21,7 +21,6 @@ type ExpressiveSwaggerOptions = {
     customfavIcon?: string,
     swaggerUrl?: string,
     customSiteTitle?: string,
-
 };
 
 export class ServerBuilder {
@@ -55,7 +54,7 @@ export class ServerBuilder {
         options?: Parameters<typeof morgan>[1],
     ) {
         this.app.use(morgan(
-            format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms',
+            format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms', // TODO: ip or x-real-ip; also, default to json?
             options ?? { stream: { write: (message: string) => { this.container.logger.info(message.trim()); } } },
         ));
         return this;
@@ -91,7 +90,7 @@ export class ServerBuilder {
             ...uiOpts,
         };
 
-        this.app.use(path ?? '/api-docs',
+        this.app.use(path,
             ...handlers,
             swaggerUi.serve,
             swaggerUi.setup(

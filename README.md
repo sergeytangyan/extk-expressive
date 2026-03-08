@@ -112,8 +112,8 @@ const app = expressiveServer()
   .withRoutes(router)
   .withSwagger(
     b => b
-    .withInfo({ title: 'My API', version: '1.0.0' })
-    .withServers([{ url: 'http://localhost:3000' }]),
+        .withInfo({ title: 'My API', version: '1.0.0' })
+        .withServers([{ url: 'http://localhost:3000' }]),
     { path: '/api-docs' },
   )
   .with((app) => {
@@ -228,12 +228,13 @@ addRoute({
 Configure security schemes via the `configure` callback in `withSwagger`:
 
 ```ts
-.withSwagger(b => b
-  .withSecuritySchemes({
-    BearerAuth: SWG.securitySchemes.BearerAuth(),
-  })
-  .withDefaultSecurity([SWG.security('BearerAuth')]),
-  {},
+.withSwagger(
+    b => b
+        .withSecuritySchemes({
+            BearerAuth: SWG.securitySchemes.BearerAuth(),
+        })
+        .withDefaultSecurity([SWG.security('BearerAuth')]),
+  { path: '/api-docs' },
 )
 ```
 
@@ -272,13 +273,14 @@ const app = expressiveServer()
   .withHelmet()
   .withQs()
   .withMorgan()
-  .withSwagger(b => b
-    .withInfo({ title: 'My API' })
-    .withServers([{ url: 'http://localhost:3000/api' }])
-    .withSchemas(z.toJSONSchema(z.globalRegistry).schemas) // all Zod schemas -> OpenAPI
-    .withSecuritySchemes({ auth: SWG.securitySchemes.BearerAuth() })
-    .withDefaultSecurity([SWG.security('auth')]),
-    {},
+  .withSwagger(
+    b => b
+        .withInfo({ title: 'My API' })
+        .withServers([{ url: 'http://localhost:3000/api' }])
+        .withSchemas(z.toJSONSchema(z.globalRegistry).schemas) // all Zod schemas -> OpenAPI
+        .withSecuritySchemes({ auth: SWG.securitySchemes.BearerAuth() })
+        .withDefaultSecurity([SWG.security('auth')]),
+    { path: '/api-docs' },
   )
   .build();
 ```
@@ -362,7 +364,7 @@ expressiveServer()
   .withSwagger(
     b => b,
     { path: '/api-docs' },
-    getBasicAuthMiddleware(process.env.SWAGGER_AUTH!, 'API Docs'),
+    getBasicAuthMiddleware(process.env.SWAGGER_AUTH ?? '', 'API Docs'),
   )
 ```
 

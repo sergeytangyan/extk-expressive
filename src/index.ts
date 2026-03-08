@@ -11,6 +11,7 @@ export type * from './types/swagger';
 export * from './common';
 export * from './env';
 export { SWG } from './swagger';
+export type { SwaggerBuilder } from './swagger';
 
 export * from './errors';
 export * from './response/ApiErrorResponse';
