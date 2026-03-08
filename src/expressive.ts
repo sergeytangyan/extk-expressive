@@ -75,28 +75,33 @@ export class ServerBuilder {
     }
 
     withSwagger(
+        configure: (builder: SwaggerBuilder) => void,
         opts: ExpressiveSwaggerOptions,
         ...handlers: ExpressHandler[]
     ) {
         const config = this.swaggerRef.doc;
         if (!config) throw new Error('withSwagger must be called before build()');
 
+        configure(new SwaggerBuilder(config));
+
+        const { path, uiOpts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle } = opts;
+
         const uiOptsWithDefaults: SwaggerUiOptions = {
             customSiteTitle: config.info?.title,
-            ...opts.uiOpts,
+            ...uiOpts,
         };
 
-        this.app.use(opts.path ?? '/api-docs',
+        this.app.use(path ?? '/api-docs',
             ...handlers,
             swaggerUi.serve,
             swaggerUi.setup(
                 config,
                 uiOptsWithDefaults,
-                opts.options,
-                opts.customCss,
-                opts.customfavIcon,
-                opts.swaggerUrl,
-                opts.customSiteTitle,
+                options,
+                customCss,
+                customfavIcon,
+                swaggerUrl,
+                customSiteTitle,
             ),
         );
 
@@ -118,11 +123,6 @@ export function buildExpressive(container: Container) {
         expressiveServer(configs?: { app?: express.Express }): ServerBuilder {
             const app = configs?.app ?? express();
             return new ServerBuilder(app, container, swaggerRef);
-        },
-
-        swaggerBuilder: () => {
-            if (!swaggerRef.doc) throw new Error('swaggerBuilder cannot be called after withSwagger');
-            return new SwaggerBuilder(swaggerRef.doc);
         },
 
         expressiveRouter(configs: {

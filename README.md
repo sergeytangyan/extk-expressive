@@ -18,6 +18,7 @@
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [What is this?](#what-is-this)
 - [Install](#install)
 - [Quick Start](#quick-start)
@@ -26,11 +27,11 @@
   - [File uploads](#file-uploads)
   - [Using Zod schemas for OpenAPI](#using-zod-schemas-for-openapi)
 - [Middleware](#middleware)
-  - [getApiErrorHandlerMiddleware](#getapierrorhandlermiddleware)
-  - [getApiNotFoundMiddleware](#getapinotfoundmiddleware)
-  - [getGlobalNotFoundMiddleware](#getglobalnotfoundmiddleware)
-  - [getGlobalErrorHandlerMiddleware](#getglobalerrorhandlermiddleware)
-  - [getBasicAuthMiddleware](#getbasicauthmiddleware)
+  - [`getApiErrorHandlerMiddleware(errorMapper?)`](#getapierrorhandlermiddlewareerrormapper)
+  - [`getApiNotFoundMiddleware()`](#getapinotfoundmiddleware)
+  - [`getGlobalNotFoundMiddleware(content?)`](#getglobalnotfoundmiddlewarecontent)
+  - [`getGlobalErrorHandlerMiddleware()`](#getglobalerrorhandlermiddleware)
+  - [`getBasicAuthMiddleware(basicAuthBase64, realm?)`](#getbasicauthmiddlewarebasicauthbase64-realm)
 - [silently](#silently)
 - [Logging](#logging)
 - [Utilities](#utilities)
@@ -69,7 +70,6 @@ import { bootstrap, ApiResponse, NotFoundError, SWG } from '@extk/expressive';
 const {
   expressiveServer,
   expressiveRouter,
-  swaggerBuilder,
   notFoundMiddleware,
   getErrorHandlerMiddleware,
   silently,
@@ -77,13 +77,7 @@ const {
   logger: console, // any object with info/warn/error/debug
 });
 
-// 2. Configure swagger metadata
-const swaggerDoc = swaggerBuilder()
-  .withInfo({ title: 'My API', version: '1.0.0' })
-  .withServers([{ url: 'http://localhost:3000' }])
-  .build();
-
-// 3. Define routes — they auto-register in the OpenAPI spec
+// 2. Define routes — they auto-register in the OpenAPI spec
 const { router, addRoute } = expressiveRouter({
   oapi: { tags: ['Users'] },
 });
@@ -110,13 +104,18 @@ addRoute(
 > Method call order on `ServerBuilder` matters — middleware is registered in the order you chain it.
 
 ```ts
-// 4. Build the Express app
+// 3. Build the Express app
 const app = expressiveServer()
   .withHelmet()
   .withQs()
   .withMorgan()
   .withRoutes(router)
-  .withSwagger({ path: '/api-docs', config: swaggerDoc })
+  .withSwagger(
+    b => b
+    .withInfo({ title: 'My API', version: '1.0.0' })
+    .withServers([{ url: 'http://localhost:3000' }]),
+    { path: '/api-docs' },
+  )
   .with((app) => {
     app.use(getErrorHandlerMiddleware());
     app.use(notFoundMiddleware);
@@ -226,14 +225,16 @@ addRoute({
 }, handler);
 ```
 
-Configure security schemes via the swagger builder:
+Configure security schemes via the `configure` callback in `withSwagger`:
 
 ```ts
-swaggerBuilder()
+.withSwagger(b => b
   .withSecuritySchemes({
     BearerAuth: SWG.securitySchemes.BearerAuth(),
   })
-  .withDefaultSecurity([SWG.security('BearerAuth')]);
+  .withDefaultSecurity([SWG.security('BearerAuth')]),
+  {},
+)
 ```
 
 ### Using Zod schemas for OpenAPI
@@ -271,15 +272,14 @@ const app = expressiveServer()
   .withHelmet()
   .withQs()
   .withMorgan()
-  .withSwagger({
-    config: swaggerBuilder()
-      .withInfo({ title: 'My API' })
-      .withServers([{ url: 'http://localhost:3000/api' }])
-      .withSchemas(z.toJSONSchema(z.globalRegistry).schemas) // all Zod schemas -> OpenAPI
-      .withSecuritySchemes({ auth: SWG.securitySchemes.BearerAuth() })
-      .withDefaultSecurity([SWG.security('auth')])
-      .get(),
-  })
+  .withSwagger(b => b
+    .withInfo({ title: 'My API' })
+    .withServers([{ url: 'http://localhost:3000/api' }])
+    .withSchemas(z.toJSONSchema(z.globalRegistry).schemas) // all Zod schemas -> OpenAPI
+    .withSecuritySchemes({ auth: SWG.securitySchemes.BearerAuth() })
+    .withDefaultSecurity([SWG.security('auth')]),
+    {},
+  )
   .build();
 ```
 
@@ -360,7 +360,8 @@ Protects a route or the Swagger UI with HTTP Basic auth. Accepts a pre-encoded b
 ```ts
 expressiveServer()
   .withSwagger(
-    { config: swaggerDoc },
+    b => b,
+    { path: '/api-docs' },
     getBasicAuthMiddleware(process.env.SWAGGER_AUTH!, 'API Docs'),
   )
 ```
