@@ -1,7 +1,6 @@
 import express from 'express';
 import helmet, { type HelmetOptions } from 'helmet';
 import morgan from 'morgan';
-import qs from 'qs';
 import swaggerUi, { type SwaggerOptions, type SwaggerUiOptions } from 'swagger-ui-express';
 import { convertExpressPath, SwaggerBuilder, tryParsePathParameters } from './swagger';
 import type { Container, HttpMethod } from './types/common';
@@ -38,14 +37,6 @@ export class ServerBuilder {
     withHelmet(options?: Readonly<HelmetOptions>) {
         // secure the app
         this.app.use(helmet(options ?? {}));
-        return this;
-    }
-
-    withQs() {
-        // express removes '+' sign from query string by default.
-        this.app.set('query parser', function(str: string) {
-            return qs.parse(str, { decoder(s: string) { return decodeURIComponent(s); } });
-        });
         return this;
     }
 

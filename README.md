@@ -107,7 +107,6 @@ addRoute(
 // 3. Build the Express app
 const app = expressiveServer()
   .withHelmet()
-  .withQs()
   .withMorgan()
   .withRoutes(router)
   .withSwagger(
@@ -271,7 +270,6 @@ import z from 'zod';
 
 const app = expressiveServer()
   .withHelmet()
-  .withQs()
   .withMorgan()
   .withSwagger(
     b => b
