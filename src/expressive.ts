@@ -41,11 +41,11 @@ export class ServerBuilder {
     }
 
     withMorgan(
-        format?: string, // TODO: FormatFn
+        format?: string | morgan.FormatFn,
         options?: Parameters<typeof morgan>[1],
     ) {
         this.app.use(morgan(
-            format ?? ':req[x-real-ip] :method :url :status :res[content-length] - :response-time ms', // TODO: ip or x-real-ip; also, default to json?
+            (format ?? ':remote-addr :method :url :status :res[content-length] - :response-time ms') as string,
             options ?? { stream: { write: (message: string) => { this.container.logger.info(message.trim()); } } },
         ));
         return this;
