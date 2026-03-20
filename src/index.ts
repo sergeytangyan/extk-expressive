@@ -1,6 +1,6 @@
 import type { Container } from './types/common';
 
-import { buildExpressive } from './expressive';
+import { buildExpressive, type BuildExpressiveOpts } from './expressive';
 import { buildMiddleware } from './middleware';
 
 
@@ -18,9 +18,9 @@ export * from './response/ApiErrorResponse';
 export * from './response/ApiResponse';
 
 
-export function bootstrap(container: Container) {
+export function bootstrap(container: Container, opts?: BuildExpressiveOpts) {
     return {
-        ...buildExpressive(container),
+        ...buildExpressive(container, opts),
         ...buildMiddleware(container),
 
         silently: async (fn: () => Promise<void> | void) => {

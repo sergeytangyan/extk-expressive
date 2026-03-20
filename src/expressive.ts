@@ -9,18 +9,24 @@ import type { AuthMethod, Param, PathItem, Servers, SwaggerConfig } from './type
 
 
 // allowing null cause we are going to hard delete the object, not to store in memory
-type SwaggerRef = { doc: SwaggerConfig | null };
+type SwaggerRef = {
+    doc?: SwaggerConfig | null;
+    bootstrapOptions?: SwaggerBootstrapOpts | null;
+};
 
-type ExpressiveSwaggerOptions = {
-    path: ExpressRoute,
-    enabled?: boolean,
+type SwaggerBootstrapOpts = {
+    enabled?: boolean;
+    configure?: (builder: SwaggerBuilder) => void;
+    uiOpts?: SwaggerUiOptions;
+    options?: SwaggerOptions;
+    customCss?: string;
+    customfavIcon?: string;
+    swaggerUrl?: string;
+    customSiteTitle?: string;
+};
 
-    uiOpts?: SwaggerUiOptions,
-    options?: SwaggerOptions,
-    customCss?: string,
-    customfavIcon?: string,
-    swaggerUrl?: string,
-    customSiteTitle?: string,
+export type BuildExpressiveOpts = {
+    swagger?: SwaggerBootstrapOpts;
 };
 
 export class ServerBuilder {
@@ -31,7 +37,10 @@ export class ServerBuilder {
     ) { }
 
     build() {
-        this.swaggerRef.doc = null;
+        if (this.swaggerRef) {
+            this.swaggerRef.doc = null; // release from memory
+            this.swaggerRef.bootstrapOptions = null; // release from memory
+        }
         return this.app;
     }
 
@@ -65,31 +74,32 @@ export class ServerBuilder {
         return this;
     }
 
-    withSwagger(
-        configure: (builder: SwaggerBuilder) => void,
-        opts: ExpressiveSwaggerOptions,
-        ...handlers: ExpressHandler[]
-    ) {
-        if (opts.enabled === false) return this;
+    withSwagger(path = '/api-docs', ...handlers: ExpressHandler[]) {
+        if (!this.swaggerRef || !this.swaggerRef.doc) {
+            return this;
+        }
 
-        const config = this.swaggerRef.doc;
-        if (!config) throw new Error('withSwagger must be called before build()');
+        const doc = this.swaggerRef.doc;
+        const {
+            configure,
+            uiOpts,
+            options,
+            customCss,
+            customfavIcon,
+            swaggerUrl,
+            customSiteTitle,
+        } = this.swaggerRef.bootstrapOptions ?? {};
 
-        configure(new SwaggerBuilder(config));
-
-        const { path, uiOpts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle } = opts;
-
-        const uiOptsWithDefaults: SwaggerUiOptions = {
-            customSiteTitle: config.info?.title,
-            ...uiOpts,
-        };
+        if (configure) {
+            configure(new SwaggerBuilder(doc));
+        }
 
         this.app.use(path,
             ...handlers,
             swaggerUi.serve,
             swaggerUi.setup(
-                config,
-                uiOptsWithDefaults,
+                doc,
+                { customSiteTitle: doc.info?.title, ...uiOpts },
                 options,
                 customCss,
                 customfavIcon,
@@ -102,15 +112,16 @@ export class ServerBuilder {
     }
 }
 
-export function buildExpressive(container: Container) {
-    const swaggerRef: SwaggerRef = {
-        doc: {
-            openapi: '3.1.0',
-            info: {},
-            paths: {},
-            components: {},
-        },
-    };
+export function buildExpressive(container: Container, opts?: BuildExpressiveOpts) {
+    const swaggerBootstrapOpts = opts?.swagger;
+
+    // no config = no swagger no matter what; with 'enabled' flag you can control swagger conditionally;
+    const swaggerRef: SwaggerRef = (!swaggerBootstrapOpts || swaggerBootstrapOpts.enabled === false)
+        ? {}
+        : {
+            doc: { openapi: '3.1.0', info: {}, paths: {}, components: {} },
+            bootstrapOptions: swaggerBootstrapOpts,
+        };
 
     return {
         expressiveServer(configs?: { app?: express.Express }): ServerBuilder {
@@ -145,46 +156,46 @@ export function buildExpressive(container: Container) {
                     // actual express routing
                     router[context.method](context.path, ...handlers);
 
-                    const {
-                        pathOverride,
-                        pathParameters,
-                        headerParameters,
-                        queryParameters,
-                        ...pathItemConfig
-                    } = context.oapi || {};
+                    // swagger
+                    if (swaggerRef?.doc) {
+                        const {
+                            pathOverride,
+                            pathParameters,
+                            headerParameters,
+                            queryParameters,
+                            ...pathItemConfig
+                        } = context.oapi || {};
 
-                    // swagger doc
-                    const route = pathOverride ?? convertExpressPath(context.path);
+                        const route = pathOverride ?? convertExpressPath(context.path);
 
-                    const pathItem: PathItem & Required<Pick<PathItem, 'responses' | 'parameters'>> = {
-                        // -- defaults --
-                        responses: { // has to be defined or else responses are not documented... ¯\_(ツ)_/¯
-                            '200': { description: 'OK' },
-                            '201': { description: 'Created' },
-                            '204': { description: 'No Content' },
-                            '400': { description: 'Bad Request' },
-                            '401': { description: 'User Unauthorized' },
-                            '403': { description: 'Forbidden' },
-                            '500': { description: 'Internal Server Error' },
-                        },
-                        // -- group defaults --
-                        ...(configs?.oapi || {}),
-                        // -- overrides --
-                        ...(pathItemConfig || {}),
-                        parameters: [
-                            // ...(contract.pathParameters || []),
-                            ...(headerParameters || []),
-                            ...(queryParameters || []),
-                        ],
-                    };
+                        const pathItem: PathItem & Required<Pick<PathItem, 'responses' | 'parameters'>> = {
+                            // -- defaults --
+                            responses: { // has to be defined or else responses are not documented... ¯\_(ツ)_/¯
+                                '200': { description: 'OK' },
+                                '201': { description: 'Created' },
+                                '204': { description: 'No Content' },
+                                '400': { description: 'Bad Request' },
+                                '401': { description: 'User Unauthorized' },
+                                '403': { description: 'Forbidden' },
+                                '500': { description: 'Internal Server Error' },
+                            },
+                            // -- group defaults --
+                            ...(configs?.oapi || {}),
+                            // -- overrides --
+                            ...(pathItemConfig || {}),
+                            parameters: [
+                                // ...(contract.pathParameters || []),
+                                ...(headerParameters || []),
+                                ...(queryParameters || []),
+                            ],
+                        };
 
-                    if (pathParameters?.length) {
-                        pathItem.parameters.push(...pathParameters);
-                    } else {
-                        pathItem.parameters.push(...tryParsePathParameters(route));
-                    }
+                        if (pathParameters?.length) {
+                            pathItem.parameters.push(...pathParameters);
+                        } else {
+                            pathItem.parameters.push(...tryParsePathParameters(route));
+                        }
 
-                    if (swaggerRef.doc) {
                         if (!swaggerRef.doc.paths[route]) {
                             swaggerRef.doc.paths[route] = {};
                         }
