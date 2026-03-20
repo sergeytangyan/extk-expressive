@@ -13,6 +13,7 @@ type SwaggerRef = { doc: SwaggerConfig | null };
 
 type ExpressiveSwaggerOptions = {
     path: ExpressRoute,
+    enabled?: boolean,
 
     uiOpts?: SwaggerUiOptions,
     options?: SwaggerOptions,
@@ -69,6 +70,8 @@ export class ServerBuilder {
         opts: ExpressiveSwaggerOptions,
         ...handlers: ExpressHandler[]
     ) {
+        if (opts.enabled === false) return this;
+
         const config = this.swaggerRef.doc;
         if (!config) throw new Error('withSwagger must be called before build()');
 

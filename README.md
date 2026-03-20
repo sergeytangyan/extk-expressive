@@ -224,6 +224,17 @@ addRoute({
 }, handler);
 ```
 
+Pass `enabled: false` to skip swagger registration conditionally without breaking the chain:
+
+```ts
+.withSwagger(
+    b => b.withInfo({ title: 'My API', version: '1.0' }),
+    { path: '/api-docs', enabled: isDev() },
+)
+```
+
+When `enabled` is `false`, `withSwagger` is a no-op and the chain continues normally. Omitting `enabled` (or passing `true`) keeps existing behavior.
+
 Configure security schemes via the `configure` callback in `withSwagger`:
 
 ```ts
